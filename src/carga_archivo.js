@@ -5,12 +5,6 @@ import {modelo,obtenerNombreArchivo,formatoNumero,formatoFecha,convertirMesNumer
 import path from 'path';
 export const procesarCsv =  (path) => {
   
-    /**
-     * se realizar el insert en la tabla cargados para evitar cargar nuevamente el archivo
-    */
-    
- 
-   
     const nameFile = obtenerNombreArchivo(path)
     truncateTable(nameFile)
     let count =0
@@ -158,9 +152,9 @@ export const procesarCsv =  (path) => {
         
         fs.unlink(path, (err) => {
             if (err) {
-              console.error(`Error removing file: ${err}`);
+              console.error(`Error al remover el archivo: ${err}`);
             }
-            console.log(`File ${path} has been successfully removed.`);
+            console.log(`archivo ${path} Eliminado exitosamente`);
         });
       });
 };
@@ -173,7 +167,6 @@ const insertTable = (path,data) =>{
     connection.query(sql,[data], function (error, results, fields) {
 
         if (error) {
-            console.log('algo ocurrio');
             console.log(error);
         }
         console.log(`registros insterdados con exito ${results.affectedRows}`)
@@ -187,6 +180,5 @@ const truncateTable =  (path) =>{
     let sql = `TRUNCATE ${tabla}`
     connection.query(sql, function (error, results, fields) {
        console.log('borrado de la tabla completado');
-       return results
     });
 }
