@@ -12,10 +12,11 @@ export const procesarCsv =  (path) => {
     let dataGiros=[]
     let dataRadicaciones=[]
     let reading = fs
-      .createReadStream(path, { encoding: "utf8", highWaterMark: 128 * 1024 })
+      .createReadStream(path, { encoding: "binary", highWaterMark: 128 * 1024 })
       .pipe(parser({ separator: ";" }))
       .on("data", (chunk) => {
-
+       
+      
         if (nameFile == 'BASE') {
             let keysBase =  Object.keys(chunk)
 
@@ -79,9 +80,11 @@ export const procesarCsv =  (path) => {
                     chunk[nombreKeyBase] = chunk[' Valor Giro ']
                     delete chunk[' Valor Giro ']
                 }
-                if (nombreKeyBase == 'R�gimen') {
-                    chunk['regimen'] = chunk[' R�gimen ']
-                    delete chunk[' R�gimen ']
+
+                
+                if (nombreKeyBase == 'Régimen') {
+                    chunk['regimen'] = chunk[' Régimen ']
+                    delete chunk[' Régimen ']
                 }
 
                 
@@ -103,7 +106,6 @@ export const procesarCsv =  (path) => {
                 chunk['AGRUPADOR'],
             ])
         }
-
         if (nameFile == 'RADICACION') {
             
             chunk['VALOR'] = formatoNumero(chunk['VALOR'])
