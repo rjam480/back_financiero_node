@@ -9,7 +9,6 @@ const watcher = chokidar.watch(process.env.FOLDER, {
     persistent: true,
 });
 
-watcher.on('add', path => {
-    
+watcher.on('add', async (path) => {
     procesarCsv(path)
 })

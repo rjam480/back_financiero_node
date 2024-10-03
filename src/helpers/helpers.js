@@ -1,4 +1,5 @@
 
+import "dotenv/config";
 
 export const modelo = {
   BASE: {
@@ -75,7 +76,7 @@ const mesesNumero ={
 
 }
 export const obtenerNombreArchivo = (path) => {
-  return path.split("\\")[6].split(".")[0];
+  return path.split("\\")[process.env.LECTURA_CARPETA].split(".")[0];
 };
 
 export const formatoNumero = (numero) => {
@@ -96,6 +97,10 @@ export const convertirMesNumero = (mes) =>{
     let mesString = mes.toLowerCase().trim()
 
     return mesesNumero[mesString]
+}
+
+export const generarPassword = () => {
+  return Math.random().toString(36).slice(-8);
 }
 
 
