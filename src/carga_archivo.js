@@ -248,13 +248,13 @@ const insertUsers = (data) => {
             if (error) {
               console.log(error);
             }
-            console.log(
-              `usuarios insterdados con exito ${results.affectedRows}`
-            );
+            // console.log(
+            //   `usuarios insterdados con exito ${results.affectedRows}`
+            // );
           });
         });
       } else {
-        console.log("USUARIO REGISTRADO");
+        // console.log("USUARIO REGISTRADO");
       }
     });
   });
