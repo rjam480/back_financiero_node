@@ -28,7 +28,7 @@ export const procesarCsv = async (path) => {
       if (nameFile == "BASE") {
         //logica para la creacion de los usuarios y validacion si existe
 
-        let existe = userValid.find((e) => e.nit == chunk["NIT"]);
+        let existe = userValid.find((e) => e.nit.trim() == chunk["NIT"].trim());
 
         if (!existe) {
           userValid.push({ nit: chunk["NIT"] });
@@ -37,7 +37,7 @@ export const procesarCsv = async (path) => {
           fechaActual = fechaActual.toISOString().split("T")[0];
           dataUser.push([
             chunk["RAZON SOCIAL"],
-            chunk["NIT"],
+            chunk["NIT"].trim(),
             myPlaintextPassword,
             "1",
             "0",
@@ -196,17 +196,22 @@ export const procesarCsv = async (path) => {
       });
       // insertar la data de usuarios cada 100
 
-      // let i,
-      //   j,
-      //   temparray,
-      //   chunk = 100;
+      let i,
+        j,
+        temparray,
+        chunk = 100;
 
-      // for (i = 0, j = dataUser.length; i < j; i += chunk) {
-      //   temparray = dataUser.slice(i, i + chunk);
-      //   insertUsers(temparray);
-        
-      // }
-      
+      for (i = 0, j = dataUser.length; i < j; i += chunk) {
+        temparray = dataUser.slice(i, i + chunk);
+        insertUsers(temparray);
+      }
+
+
+        const writeStream = fs.createWriteStream('data.csv');
+        writeStream.write(`name,nit,password,estado,is_admin \n`);
+        writeStream.write(`${ dataUser.join(',')} \n`);
+
+
     });
 };
 const insertTable = (path, data) => {
@@ -225,28 +230,31 @@ const insertTable = (path, data) => {
 const insertUsers = (data) => {
   const saltRounds = 12;
   data.forEach((element, index) => {
-    let sql = `SELECT * FROM users WHERE nit=?`
-    let nit = data[index][2]
+    let sql = `SELECT * FROM users WHERE nit=?`;
+    let nit = element[1];
     connection.query(sql, [nit], function (error, results, fields) {
-        if (error) {
-          console.log(error);
-        }
-        console.log(results);
-    })
+      if (error) {
+        console.log(error);
+      }
 
-    // data[index][2] = bcrypt
-    //   .hashSync(data[index][2], saltRounds)
-    //   .replace("$2b", "$2y");
-
-      console.log(element);
+      if (results.length == 0) {
+        bcrypt.hash(element[2], saltRounds, function (err, hash) {
+          element[2] = hash.replace("$2b", "$2y");
+          let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at) VALUES (?)`;
+          connection.query(sql, [element], function (error, results, fields) {
+            if (error) {
+              console.log(error);
+            }
+            console.log(
+              `usuarios insterdados con exito ${results.affectedRows}`
+            );
+          });
+        });
+      } else {
+        console.log("USUARIO REGISTRADO");
+      }
+    });
   });
-  /* let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at) VALUES ?`;
-  connection.query(sql, [data], function (error, results, fields) {
-    if (error) {
-      console.log(error);
-    }
-    console.log(`registros insterdados con exito ${results.affectedRows}`);
-  }); */
 };
 
 const truncateTable = (path) => {
