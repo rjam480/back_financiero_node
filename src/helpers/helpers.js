@@ -2,7 +2,7 @@
 import "dotenv/config";
 
 export const modelo = {
-  BASE: {
+  base: {
     columnas: [
       "nit",
       "razon_social",
@@ -28,7 +28,7 @@ export const modelo = {
     ],
     tabla:"bases"
   },
-  GIROS: {
+  giros: {
     columnas: [
       "mecanismo",
       "fecha_pagos_ips",
@@ -43,7 +43,7 @@ export const modelo = {
     ],
     tabla:'giros'
   },
-  RADICACION: {
+  radicacion: {
     columnas: [
       "nit",
       "razon_social",
