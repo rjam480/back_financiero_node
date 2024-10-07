@@ -170,8 +170,8 @@ export const procesarCsv = async (path) => {
         eliminarArchivo(path)
 
         // insertar la data de usuarios cada 100
-        // chunkData(dataUser,100,'',insertUsers)
-        // crearCsv(dataUser)
+        chunkData(dataUser,100,'',insertUsers)
+        crearCsv(dataUser)
       }
 
       if (nameFile == "giros") {
