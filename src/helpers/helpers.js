@@ -76,7 +76,9 @@ const mesesNumero ={
 
 }
 export const obtenerNombreArchivo = (path) => {
-  return path.split("\\")[process.env.LECTURA_CARPETA].split(".")[0];
+  let archivo = path.split("\\")[process.env.LECTURA_CARPETA].split(".")[0];
+  archivo = archivo.toLowerCase()
+  return archivo
 };
 
 export const formatoNumero = (numero) => {

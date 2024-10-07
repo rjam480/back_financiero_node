@@ -25,7 +25,7 @@ export const procesarCsv = async (path) => {
     .createReadStream(path, { encoding: "binary", highWaterMark: 128 * 1024 })
     .pipe(parser({ separator: ";" }))
     .on("data", (chunk) => {
-      if (nameFile == "BASE") {
+      if (nameFile == "base") {
         //logica para la creacion de los usuarios y validacion si existe
 
         let existe = userValid.find((e) => e.nit.trim() == chunk["NIT"].trim());
@@ -99,7 +99,7 @@ export const procesarCsv = async (path) => {
           chunk["Total Giros"],
         ]);
       }
-      if (nameFile == "GIROS") {
+      if (nameFile == "giros") {
         let keysBase = Object.keys(chunk);
 
         keysBase.forEach((element) => {
@@ -136,7 +136,7 @@ export const procesarCsv = async (path) => {
           chunk["AGRUPADOR"],
         ]);
       }
-      if (nameFile == "RADICACION") {
+      if (nameFile == "radicacion") {
         chunk["VALOR"] = formatoNumero(chunk["VALOR"]);
 
         dataRadicaciones.push([
@@ -163,30 +163,30 @@ export const procesarCsv = async (path) => {
       //   temparray = dataBase.slice(i, i + chunk);
       //   insertTable(nameFile, temparray);
       // }
-      if (nameFile == "BASE") {
+      if (nameFile == "base") {
         truncateTable(nameFile);
         chunkData(dataBase,10000,nameFile,insertTable)
         dataBase = [];
         eliminarArchivo(path)
+
+        // insertar la data de usuarios cada 100
+        chunkData(dataUser,100,'',insertUsers)
+        crearCsv(dataUser)
       }
 
-      if (nameFile == "GIROS") {
+      if (nameFile == "giros") {
         truncateTable(nameFile);
         chunkData(dataGiros,10000,nameFile,insertTable)
         dataGiros = [];
         eliminarArchivo(path)
       }
-      if (nameFile == "RADICACION") {
+      if (nameFile == "radicacion") {
         truncateTable(nameFile);
         chunkData(dataRadicaciones,10000,nameFile,insertTable)
         dataRadicaciones = [];
         eliminarArchivo(path)
       }
-
-    
-      // insertar la data de usuarios cada 100
-      chunkData(dataUser,100,nameFile,insertUsers)
-      crearCsv(dataUser)
+      
     });
 };
 const insertTable = (path, data) => {
@@ -202,7 +202,7 @@ const insertTable = (path, data) => {
   });
 };
 
-const insertUsers = (data) => {
+const insertUsers = (nameFile='',data) => {
   const saltRounds = 12;
   data.forEach((element, index) => {
     let sql = `SELECT * FROM users WHERE nit=?`;
