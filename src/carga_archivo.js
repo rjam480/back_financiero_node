@@ -208,8 +208,11 @@ export const procesarCsv = async (path) => {
 
 
         const writeStream = fs.createWriteStream('data.csv');
-        writeStream.write(`name,nit,password,estado,is_admin \n`);
-        writeStream.write(`${ dataUser.join(',')} \n`);
+        const rows = dataUser.map(user =>
+          `${user[0]}, ${user[1]}, ${user[2]},${user[3]}, ${user[4]}, ${user[5]}`
+       );
+        writeStream.write(`name,nit,password,estado,is_admin,fecha_creacion \n`);
+        writeStream.write(`${ rows.join('\n')}`);
 
 
     });
