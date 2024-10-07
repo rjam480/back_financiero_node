@@ -13,7 +13,7 @@ import {
 
 export const procesarCsv = async (path) => {
   const nameFile = obtenerNombreArchivo(path);
-  truncateTable(nameFile);
+  
   let count = 0;
   let dataBase = [];
   let dataGiros = [];
@@ -155,66 +155,38 @@ export const procesarCsv = async (path) => {
       }
     })
     .on("end", async () => {
+      // let i,
+      //   j,
+      //   temparray,
+      //   chunk = 10000;
+      // for (i = 0, j = dataBase.length; i < j; i += chunk) {
+      //   temparray = dataBase.slice(i, i + chunk);
+      //   insertTable(nameFile, temparray);
+      // }
       if (nameFile == "BASE") {
-        // insertTable(nameFile,dataBase)
-        let i,
-          j,
-          temparray,
-          chunk = 10000;
-        for (i = 0, j = dataBase.length; i < j; i += chunk) {
-          temparray = dataBase.slice(i, i + chunk);
-          insertTable(nameFile, temparray);
-        }
+        truncateTable(nameFile);
+        chunkData(dataBase,10000,nameFile,insertTable)
+        dataBase = [];
+        eliminarArchivo(path)
       }
+
       if (nameFile == "GIROS") {
-        // insertTable(nameFile,dataGiros)
-        let i,
-          j,
-          temparray,
-          chunk = 10000;
-        for (i = 0, j = dataGiros.length; i < j; i += chunk) {
-          temparray = dataGiros.slice(i, i + chunk);
-          insertTable(nameFile, temparray);
-        }
+        truncateTable(nameFile);
+        chunkData(dataGiros,10000,nameFile,insertTable)
+        dataGiros = [];
+        eliminarArchivo(path)
       }
       if (nameFile == "RADICACION") {
-        let i,
-          j,
-          temparray,
-          chunk = 10000;
-        for (i = 0, j = dataRadicaciones.length; i < j; i += chunk) {
-          temparray = dataRadicaciones.slice(i, i + chunk);
-          insertTable(nameFile, temparray);
-        }
+        truncateTable(nameFile);
+        chunkData(dataRadicaciones,10000,nameFile,insertTable)
+        dataRadicaciones = [];
+        eliminarArchivo(path)
       }
 
-      fs.unlink(path, (err) => {
-        if (err) {
-          console.error(`Error al remover el archivo: ${err}`);
-        }
-        console.log(`archivo ${path} Eliminado exitosamente`);
-      });
+    
       // insertar la data de usuarios cada 100
-
-      let i,
-        j,
-        temparray,
-        chunk = 100;
-
-      for (i = 0, j = dataUser.length; i < j; i += chunk) {
-        temparray = dataUser.slice(i, i + chunk);
-        insertUsers(temparray);
-      }
-
-
-        const writeStream = fs.createWriteStream('data.csv');
-        const rows = dataUser.map(user =>
-          `${user[0]}, ${user[1]}, ${user[2]},${user[3]}, ${user[4]}, ${user[5]}`
-       );
-        writeStream.write(`name,nit,password,estado,is_admin,fecha_creacion \n`);
-        writeStream.write(`${ rows.join('\n')}`);
-
-
+      chunkData(dataUser,100,nameFile,insertUsers)
+      crearCsv(dataUser)
     });
 };
 const insertTable = (path, data) => {
@@ -260,6 +232,13 @@ const insertUsers = (data) => {
   });
 };
 
+const chunkData = (data, chunk, nameFile,insertFTable) => {
+  let i, j, temparray;
+  for (i = 0, j = data.length; i < j; i += chunk) {
+    temparray = data.slice(i, i + chunk);
+    insertFTable(nameFile, temparray);
+  }
+};
 const truncateTable = (path) => {
   const tabla = modelo[path].tabla;
   let sql = `TRUNCATE ${tabla}`;
@@ -267,3 +246,22 @@ const truncateTable = (path) => {
     console.log("borrado de la tabla completado");
   });
 };
+
+const crearCsv = (data) =>{
+  const writeStream = fs.createWriteStream("data.csv");
+  const rows = data.map(
+    (user) =>
+      `${user[0]}, ${user[1]}, ${user[2]},${user[3]}, ${user[4]}, ${user[5]}`
+  );
+  writeStream.write(`name,nit,password,estado,is_admin,fecha_creacion \n`);
+  writeStream.write(`${rows.join("\n")}`);
+}
+
+const eliminarArchivo = (path) =>{
+  fs.unlink(path, (err) => {
+    if (err) {
+      console.error(`Error al remover el archivo: ${err}`);
+    }
+    console.log(`archivo ${path} Eliminado exitosamente`);
+  });
+}
