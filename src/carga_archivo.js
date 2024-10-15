@@ -248,12 +248,15 @@ const truncateTable = (path) => {
 };
 
 const crearCsv = (data) =>{
-  const writeStream = fs.createWriteStream("data.csv");
+  let fechaActual = new Date();
+  fechaActual = fechaActual.toISOString().split("T")[0];
+  let nombreArchivo = `data_${fechaActual}.csv`
+  const writeStream = fs.createWriteStream(nombreArchivo);
   const rows = data.map(
     (user) =>
-      `${user[0]}, ${user[1]}, ${user[2]},${user[3]}, ${user[4]}, ${user[5]}`
+      `${user[0]}, ${user[1]}, ${user[2]}, ${user[5]}`
   );
-  writeStream.write(`name,nit,password,estado,is_admin,fecha_creacion \n`);
+  writeStream.write(`name,nit,password,fecha_creacion \n`);
   writeStream.write(`${rows.join("\n")}`);
 }
 
