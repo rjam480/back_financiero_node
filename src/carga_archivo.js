@@ -88,7 +88,7 @@ export const procesarCsv = async (path) => {
           chunk["DEVOLUCION"],
           chunk["GLOSAS"],
           chunk["RADICACION MENSUAL"],
-          chunk["BLOQUEO"],
+          (chunk["BLOQUEO"])? chunk["BLOQUEO"] : '',
           chunk["PAGO GD SUBSIDIADO"],
           chunk["GD CONTR-I"],
           chunk["GD CONTR-II"],
@@ -250,7 +250,8 @@ const truncateTable = (path) => {
 const crearCsv = (data) =>{
   let fechaActual = new Date();
   fechaActual = fechaActual.toISOString().split("T")[0];
-  let nombreArchivo = `data_${fechaActual}.csv`
+  
+  let nombreArchivo = `${process.env.FOLDER_CARGA}data_${fechaActual}.csv`
   const writeStream = fs.createWriteStream(nombreArchivo);
   const rows = data.map(
     (user) =>

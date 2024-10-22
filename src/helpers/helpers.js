@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 
 export const modelo = {
@@ -26,7 +25,7 @@ export const modelo = {
       "pago_por_tesoreria",
       "total_giros",
     ],
-    tabla:"bases"
+    tabla: "bases",
   },
   giros: {
     columnas: [
@@ -41,7 +40,7 @@ export const modelo = {
       "mes_numero",
       "agrupador",
     ],
-    tabla:'giros'
+    tabla: "giros",
   },
   radicacion: {
     columnas: [
@@ -57,52 +56,52 @@ export const modelo = {
       "valor",
       "clasificacion",
     ],
-    tabla:"radicaciones"
+    tabla: "radicaciones",
   },
 };
-const mesesNumero ={
-    'enero':1,
-    'febrero':2,
-    'marzo':3,
-    'abril':4,
-    'mayo':5,
-    'junio':6,
-    'julio':7,
-    'agosto':8,
-    'septiembre':9,
-    'octubre':10,
-    'noviembre':11,
-    'diciembre':12,
-
-}
+const mesesNumero = {
+  enero: 1,
+  febrero: 2,
+  marzo: 3,
+  abril: 4,
+  mayo: 5,
+  junio: 6,
+  julio: 7,
+  agosto: 8,
+  septiembre: 9,
+  octubre: 10,
+  noviembre: 11,
+  diciembre: 12,
+};
 export const obtenerNombreArchivo = (path) => {
   let archivo = path.split("\\")[process.env.LECTURA_CARPETA].split(".")[0];
-  archivo = archivo.toLowerCase()
-  return archivo
+  archivo = archivo.toLowerCase();
+  return archivo;
 };
 
 export const formatoNumero = (numero) => {
-    let numeroString = numero.replaceAll('.','')
-    let numeroFloat =  parseFloat(numeroString).toFixed(2)
-    return numeroFloat
-}
-export const formatoFecha =  (fecha) =>{
-    let fechaFomato = fecha.split('/')
-    let dia = fechaFomato[0]
-    dia =  (dia <=9) ? `0${dia}` : dia
-    let mes = fechaFomato[1]
-    let anio = fechaFomato[2]
-    let fechaNueva= `${anio}-${mes}-${dia}`
-    return fechaNueva
-}
-export const convertirMesNumero = (mes) =>{
-    let mesString = mes.toLowerCase().trim()
+  let numeroString = numero.replaceAll(".", "");
+  let numeroFloat = parseFloat(numeroString).toFixed(2);
+  if (numeroFloat == 'NaN') {
+    numeroFloat  = parseFloat(0).toFixed(2);
+  }
+  return numeroFloat;
+};
+export const formatoFecha = (fecha) => {
+  let fechaFomato = fecha.split("/");
+  let dia = fechaFomato[0];
+  dia = dia <= 9 ? `0${dia}` : dia;
+  let mes = fechaFomato[1];
+  let anio = fechaFomato[2];
+  let fechaNueva = `${anio}-${mes}-${dia}`;
+  return fechaNueva;
+};
+export const convertirMesNumero = (mes) => {
+  let mesString = mes.toLowerCase().trim();
 
-    return mesesNumero[mesString]
-}
+  return mesesNumero[mesString];
+};
 
 export const generarPassword = () => {
   return Math.random().toString(36).slice(-8);
-}
-
-
+};
