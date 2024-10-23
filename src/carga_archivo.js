@@ -13,7 +13,7 @@ import {
 
 export const procesarCsv = async (path) => {
   const nameFile = obtenerNombreArchivo(path);
-  
+
   let count = 0;
   let dataBase = [];
   let dataGiros = [];
@@ -35,6 +35,11 @@ export const procesarCsv = async (path) => {
           const myPlaintextPassword = generarPassword();
           let fechaActual = new Date();
           fechaActual = fechaActual.toISOString().split("T")[0];
+          // creacion de la fecha de expiracion del password
+          let meses = parseInt(process.env.TIEMPO_EXPIRA);
+          let fechaExpira = new Date();
+          fechaExpira.setMonth(fechaExpira.getMonth() + meses);
+          fechaExpira = fechaExpira.toISOString().split("T")[0];
           dataUser.push([
             chunk["RAZON SOCIAL"],
             chunk["NIT"].trim(),
@@ -42,6 +47,7 @@ export const procesarCsv = async (path) => {
             "1",
             "0",
             fechaActual,
+            fechaExpira,
           ]);
         }
 
@@ -88,7 +94,7 @@ export const procesarCsv = async (path) => {
           chunk["DEVOLUCION"],
           chunk["GLOSAS"],
           chunk["RADICACION MENSUAL"],
-          (chunk["BLOQUEO"])? chunk["BLOQUEO"] : '',
+          chunk["BLOQUEO"],
           chunk["PAGO GD SUBSIDIADO"],
           chunk["GD CONTR-I"],
           chunk["GD CONTR-II"],
@@ -165,28 +171,27 @@ export const procesarCsv = async (path) => {
       // }
       if (nameFile == "base") {
         truncateTable(nameFile);
-        chunkData(dataBase,10000,nameFile,insertTable)
+        chunkData(dataBase, 10000, nameFile, insertTable);
         dataBase = [];
-        eliminarArchivo(path)
+        eliminarArchivo(path);
 
         // insertar la data de usuarios cada 100
-        chunkData(dataUser,100,'',insertUsers)
-        crearCsv(dataUser)
+        chunkData(dataUser, 100, "", insertUsers);
+        crearCsv(dataUser);
       }
 
       if (nameFile == "giros") {
         truncateTable(nameFile);
-        chunkData(dataGiros,10000,nameFile,insertTable)
+        chunkData(dataGiros, 10000, nameFile, insertTable);
         dataGiros = [];
-        eliminarArchivo(path)
+        eliminarArchivo(path);
       }
       if (nameFile == "radicacion") {
         truncateTable(nameFile);
-        chunkData(dataRadicaciones,10000,nameFile,insertTable)
+        chunkData(dataRadicaciones, 10000, nameFile, insertTable);
         dataRadicaciones = [];
-        eliminarArchivo(path)
+        eliminarArchivo(path);
       }
-      
     });
 };
 const insertTable = (path, data) => {
@@ -202,7 +207,7 @@ const insertTable = (path, data) => {
   });
 };
 
-const insertUsers = (nameFile='',data) => {
+const insertUsers = (nameFile = "", data) => {
   const saltRounds = 12;
   data.forEach((element, index) => {
     let sql = `SELECT * FROM users WHERE nit=?`;
@@ -215,7 +220,7 @@ const insertUsers = (nameFile='',data) => {
       if (results.length == 0) {
         bcrypt.hash(element[2], saltRounds, function (err, hash) {
           element[2] = hash.replace("$2b", "$2y");
-          let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at) VALUES (?)`;
+          let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at,expira_password) VALUES (?)`;
           connection.query(sql, [element], function (error, results, fields) {
             if (error) {
               console.log(error);
@@ -232,7 +237,7 @@ const insertUsers = (nameFile='',data) => {
   });
 };
 
-const chunkData = (data, chunk, nameFile,insertFTable) => {
+const chunkData = (data, chunk, nameFile, insertFTable) => {
   let i, j, temparray;
   for (i = 0, j = data.length; i < j; i += chunk) {
     temparray = data.slice(i, i + chunk);
@@ -247,25 +252,24 @@ const truncateTable = (path) => {
   });
 };
 
-const crearCsv = (data) =>{
+const crearCsv = (data) => {
   let fechaActual = new Date();
   fechaActual = fechaActual.toISOString().split("T")[0];
-  
-  let nombreArchivo = `${process.env.FOLDER_CARGA}data_${fechaActual}.csv`
+
+  let nombreArchivo = `${process.env.FOLDER_CARGA}data_${fechaActual}.csv`;
   const writeStream = fs.createWriteStream(nombreArchivo);
   const rows = data.map(
-    (user) =>
-      `${user[0]}, ${user[1]}, ${user[2]}, ${user[5]}`
+    (user) => `${user[0]}, ${user[1]}, ${user[2]}, ${user[5]}`
   );
   writeStream.write(`name,nit,password,fecha_creacion \n`);
   writeStream.write(`${rows.join("\n")}`);
-}
+};
 
-const eliminarArchivo = (path) =>{
+const eliminarArchivo = (path) => {
   fs.unlink(path, (err) => {
     if (err) {
       console.error(`Error al remover el archivo: ${err}`);
     }
     console.log(`archivo ${path} Eliminado exitosamente`);
   });
-}
+};
