@@ -2,6 +2,7 @@ import { connection } from "./databases/conect_mysql.js";
 import fs, { read } from "fs";
 import parser from "csv-parser";
 import bcrypt from "bcrypt";
+import axios from 'axios';
 import {
   modelo,
   obtenerNombreArchivo,
@@ -10,6 +11,7 @@ import {
   convertirMesNumero,
   generarPassword,
 } from "./helpers/helpers.js";
+import { NULL } from "mysql/lib/protocol/constants/types.js";
 
 export const procesarCsv = async (path) => {
   const nameFile = obtenerNombreArchivo(path);
@@ -27,9 +29,9 @@ export const procesarCsv = async (path) => {
     .on("data", (chunk) => {
       if (nameFile == "base") {
         //logica para la creacion de los usuarios y validacion si existe
-
+       
         let existe = userValid.find((e) => e.nit.trim() == chunk["NIT"].trim());
-
+       
         if (!existe) {
           userValid.push({ nit: chunk["NIT"] });
           const myPlaintextPassword = generarPassword();
@@ -40,6 +42,8 @@ export const procesarCsv = async (path) => {
           let fechaExpira = new Date();
           fechaExpira.setMonth(fechaExpira.getMonth() + meses);
           fechaExpira = fechaExpira.toISOString().split("T")[0];
+          let correo = (chunk["CORREO"] != undefined) ? (chunk["CORREO"]) : null
+         
           dataUser.push([
             chunk["RAZON SOCIAL"],
             chunk["NIT"].trim(),
@@ -48,6 +52,7 @@ export const procesarCsv = async (path) => {
             "0",
             fechaActual,
             fechaExpira,
+            correo
           ]);
         }
 
@@ -207,43 +212,76 @@ const insertTable = (path, data) => {
   });
 };
 
-const insertUsers = (nameFile = "", data) => {
-  const saltRounds = 12;
-  data.forEach((element, index) => {
+ const  insertUsers  =  async (nameFile = "", data) => {
+  
+  let dataJob= [];
+  let i = 0
+  data.forEach(async (element, index) => {
     let sql = `SELECT * FROM users WHERE nit=?`;
     let nit = element[1];
-    connection.query(sql, [nit], function (error, results, fields) {
-      if (error) {
-        console.log(error);
+    let nuevoIndex  = index +1
+    const result = await promiseCheckUser(sql,nit)
+
+    if (result.length == 0) {
+      const dataEmail = {
+        nit,
+        password:element[2],
+        email:'rj480@homail.com'
+      }
+      // element[7]
+      dataJob.push(dataEmail)
+      
+      
+
+      if (data.length == nuevoIndex) {
+        const headers = {
+          'Content-Type': 'application/json',
+        }
+        const form = new FormData()
+        form.append('data',JSON.stringify(dataJob))
+        dataJob = []
+
+        await axios
+        .post('http://back_financiero.test/api/creacion-cuenta', form,{
+          headers
+        })
+       
       }
 
-      if (results.length == 0) {
-        bcrypt.hash(element[2], saltRounds, function (err, hash) {
-          element[2] = hash.replace("$2b", "$2y");
-          let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at,expira_password) VALUES (?)`;
-          connection.query(sql, [element], function (error, results, fields) {
-            if (error) {
-              console.log(error);
-            }
-            // console.log(
-            //   `usuarios insterdados con exito ${results.affectedRows}`
-            // );
-          });
+      bcrypt.hash(element[2], 12, function (err, hash) {
+        element[2] = hash.replace("$2b", "$2y");
+        let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at,expira_password,email) VALUES (?)`;
+        connection.query(sql, [element], function (error, results, fields) {
+          if (error) {
+            console.log(error);
+          }
+
+          
+          console.log(
+            `usuarios insterdados con exito ${results.affectedRows}`
+          );
         });
-      } else {
-        // console.log("USUARIO REGISTRADO");
-      }
-    });
+      });
+
+    }
   });
+
+  
+  // envio para la creacion de las tareas
 };
 
-const chunkData = (data, chunk, nameFile, insertFTable) => {
+const chunkData = async(data, chunk, nameFile, insertFTable) => {
   let i, j, temparray;
   for (i = 0, j = data.length; i < j; i += chunk) {
     temparray = data.slice(i, i + chunk);
-    insertFTable(nameFile, temparray);
+    
+    await insertFTable(nameFile, temparray);
+ 
+   
   }
 };
+
+
 const truncateTable = (path) => {
   const tabla = modelo[path].tabla;
   let sql = `TRUNCATE ${tabla}`;
@@ -273,3 +311,18 @@ const eliminarArchivo = (path) => {
     console.log(`archivo ${path} Eliminado exitosamente`);
   });
 };
+
+
+const  promiseCheckUser = (sql,nit) =>{
+
+  return new Promise((resolve, reject) => {
+    connection.query(sql, [nit], function (error, results, fields) {
+      if (error) {
+        reject(error)
+      }
+
+      resolve(results)
+
+    });
+  });
+}
