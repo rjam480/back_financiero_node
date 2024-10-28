@@ -166,14 +166,7 @@ export const procesarCsv = async (path) => {
       }
     })
     .on("end", async () => {
-      // let i,
-      //   j,
-      //   temparray,
-      //   chunk = 10000;
-      // for (i = 0, j = dataBase.length; i < j; i += chunk) {
-      //   temparray = dataBase.slice(i, i + chunk);
-      //   insertTable(nameFile, temparray);
-      // }
+     
       if (nameFile == "base") {
         truncateTable(nameFile);
         chunkData(dataBase, 10000, nameFile, insertTable);
@@ -223,28 +216,35 @@ const insertTable = (path, data) => {
     const result = await promiseCheckUser(sql,nit)
 
     if (result.length == 0) {
-      const dataEmail = {
-        nit,
-        password:element[2],
-        email:'rj480@homail.com'
+
+      if (element[7] != null) {
+        
+        const dataEmail = {
+          nit,
+          password:element[2],
+          email:element[7]
+        }
+        dataJob.push(dataEmail)
       }
-      // element[7]
-      dataJob.push(dataEmail)
+      
       
       
 
       if (data.length == nuevoIndex) {
-        const headers = {
-          'Content-Type': 'application/json',
+        if (dataJob.length > 0) {
+          const headers = {
+            'Content-Type': 'application/json',
+          }
+          
+          const form = new FormData()
+          form.append('data',JSON.stringify(dataJob))
+          dataJob = []
+  
+          await axios
+          .post('http://back_financiero.test/api/creacion-cuenta', form,{
+            headers
+          })
         }
-        const form = new FormData()
-        form.append('data',JSON.stringify(dataJob))
-        dataJob = []
-
-        await axios
-        .post('http://back_financiero.test/api/creacion-cuenta', form,{
-          headers
-        })
        
       }
 
@@ -257,9 +257,9 @@ const insertTable = (path, data) => {
           }
 
           
-          console.log(
-            `usuarios insterdados con exito ${results.affectedRows}`
-          );
+          // console.log(
+          //   `usuarios insterdados con exito ${results.affectedRows}`
+          // );
         });
       });
 
