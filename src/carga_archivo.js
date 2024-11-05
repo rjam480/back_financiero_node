@@ -11,7 +11,12 @@ import {
   convertirMesNumero,
   generarPassword,
 } from "./helpers/helpers.js";
-import { NULL } from "mysql/lib/protocol/constants/types.js";
+
+let fechaActual = new Date();
+fechaActual = fechaActual.toISOString().split("T")[0];
+
+let nombreArchivo = `${process.env.FOLDER_CARGA}data_${fechaActual}.csv`;
+const writeStream = fs.createWriteStream(nombreArchivo);
 
 export const procesarCsv = async (path) => {
   const nameFile = obtenerNombreArchivo(path);
@@ -42,14 +47,15 @@ export const procesarCsv = async (path) => {
           let fechaExpira = new Date();
           fechaExpira.setMonth(fechaExpira.getMonth() + meses);
           fechaExpira = fechaExpira.toISOString().split("T")[0];
-          let correo = (chunk["CORREO"] != undefined) ? (chunk["CORREO"]) : null
-         
+          let correo = (chunk["CORREO"].trim() != '') ? (chunk["CORREO"]) : ''
+          let isAdmin = (chunk["is_admin"].trim() == '')? 0 : chunk["is_admin"]
+          
           dataUser.push([
             chunk["RAZON SOCIAL"],
             chunk["NIT"].trim(),
             myPlaintextPassword,
             "1",
-            "0",
+            isAdmin,
             fechaActual,
             fechaExpira,
             correo
@@ -66,6 +72,7 @@ export const procesarCsv = async (path) => {
             chunk[nombreKeyBase] = chunk["GD CONTR-II "];
           }
         });
+        
         chunk["EN PROCESO"] = formatoNumero(chunk["EN PROCESO"]);
         chunk["DEVOLUCION"] = formatoNumero(chunk["DEVOLUCION"]);
         chunk["GLOSAS"] = formatoNumero(chunk["GLOSAS"]);
@@ -120,17 +127,17 @@ export const procesarCsv = async (path) => {
             chunk[nombreKeyBase] = chunk[" Nombre "];
             delete chunk[" Nombre "];
           }
-          if (nombreKeyBase == "Valor Giro") {
-            chunk[nombreKeyBase] = chunk[" Valor Giro "];
-            delete chunk[" Valor Giro "];
-          }
+          // if (nombreKeyBase == "Valor Giro") {
+          //   chunk[nombreKeyBase] = chunk[" Valor Giro "];
+          //   delete chunk[" Valor Giro "];
+          // }
 
           if (nombreKeyBase == "Régimen") {
             chunk["regimen"] = chunk[" Régimen "];
             delete chunk[" Régimen "];
           }
         });
-
+       
         chunk["Fecha PAGO a IPS"] = formatoFecha(chunk["Fecha PAGO a IPS"]);
         chunk["Valor Giro"] = formatoNumero(chunk["Valor Giro"]);
         chunk["mes_numero"] = convertirMesNumero(chunk["MES"]);
@@ -175,7 +182,7 @@ export const procesarCsv = async (path) => {
 
         // insertar la data de usuarios cada 100
         chunkData(dataUser, 100, "", insertUsers);
-        crearCsv(dataUser);
+        
       }
 
       if (nameFile == "giros") {
@@ -196,13 +203,16 @@ const insertTable = (path, data) => {
   const columnas = modelo[path].columnas;
   const tabla = modelo[path].tabla;
   let sql = `INSERT INTO ${tabla} (${columnas}) VALUES ?`;
-
+  // connection.connect();
+  
   connection.query(sql, [data], function (error, results, fields) {
     if (error) {
       console.log(error);
     }
     console.log(`registros insterdados con exito ${results.affectedRows}`);
   });
+  
+ 
 };
 
  const  insertUsers  =  async (nameFile = "", data) => {
@@ -216,8 +226,8 @@ const insertTable = (path, data) => {
     const result = await promiseCheckUser(sql,nit)
 
     if (result.length == 0) {
-
-      if (element[7] != null) {
+      
+      if (element[7] != '') {
         
         const dataEmail = {
           nit,
@@ -231,6 +241,7 @@ const insertTable = (path, data) => {
       
 
       if (data.length == nuevoIndex) {
+        
         if (dataJob.length > 0) {
           const headers = {
             'Content-Type': 'application/json',
@@ -247,7 +258,7 @@ const insertTable = (path, data) => {
         }
        
       }
-
+      crearCsv(data);
       bcrypt.hash(element[2], 12, function (err, hash) {
         element[2] = hash.replace("$2b", "$2y");
         let sql = `INSERT INTO users (name,nit,password,estado,is_admin,created_at,expira_password,email) VALUES (?)`;
@@ -291,11 +302,7 @@ const truncateTable = (path) => {
 };
 
 const crearCsv = (data) => {
-  let fechaActual = new Date();
-  fechaActual = fechaActual.toISOString().split("T")[0];
-
-  let nombreArchivo = `${process.env.FOLDER_CARGA}data_${fechaActual}.csv`;
-  const writeStream = fs.createWriteStream(nombreArchivo);
+ 
   const rows = data.map(
     (user) => `${user[0]}, ${user[1]}, ${user[2]}, ${user[5]}`
   );

@@ -80,7 +80,8 @@ export const obtenerNombreArchivo = (path) => {
 };
 
 export const formatoNumero = (numero) => {
-  let numeroString = numero.replaceAll(".", "");
+  let num = (numero == undefined) ? "0.00":numero
+  let numeroString = num.replaceAll(".", "");
   let numeroFloat = parseFloat(numeroString).toFixed(2);
   if (numeroFloat == 'NaN') {
     numeroFloat  = parseFloat(0).toFixed(2);
